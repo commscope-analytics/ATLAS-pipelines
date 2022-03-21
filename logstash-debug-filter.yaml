@@ -1,0 +1,97 @@
+apiVersion: v1
+data:
+  logstash_debug_elastic.conf: |+
+       filter {
+          if "docker" in [message] and "stdout" in [message] {
+             json {
+                  source => "message"
+                  remove_field => "message"
+                  remove_field => "[kubernetes][pod_ip]"
+
+                } 
+              if [stream] == "stdout" {
+                 if [gNBSwVersion] {
+                  mutate {
+                      add_field => {"sw_version" => "%{[gNBSwVersion]}"}
+                        remove_field => "[gNBSwVersion]"
+                     }
+                  }
+           #Converting the time into UTC before sending into ELK
+            if [timezone] != "Z"{
+             date {
+                  match => [ "timestamp", "ISO8601","MMM dd HH:mm:ss"]
+                  timezone => "%{timezone}"
+                  #timezone => "Etc/UTC"
+                  target => "@timestamp"
+                  remove_field => "timestamp"
+                 }
+               }
+           # Directly sending to ELK since time is in UTC
+            else if [timezone] == "Z" {
+             date {
+                  match => [ "timestamp", "ISO8601","MMM dd HH:mm:ss"]
+                  target => "@timestamp"
+                  remove_field => "timestamp"
+                 }
+               }
+
+            #mutate {
+               #add_field => { "log_type" => "debug"}
+               #}
+            if "_grokparsefailure" not in [tags] {
+                grok {
+                    match => {"log" => "%{WORD:app_name}\|%{DATA:log_level}\s\"%{GREEDYDATA:context}\"\s\{%{GREEDYDATA:log_message}\}"}
+                    remove_field => "log"
+                    add_field => { "log_type" => "debug"}
+               }
+             }
+            if "_grokparsefailure" in [tags] {
+                grok {
+                    match => {"log" => "%{WORD:app_name}\|%{DATA:log_level}\s\"\(%{GREEDYDATA:context}\)\"\s%{GREEDYDATA:log_message}"}
+                    remove_field => "log"
+                    remove_field => "tags"
+                    add_field => { "log_type" => "debug"}
+              }
+             }
+            if "_grokparsefailure" in [tags] {
+                grok {
+                    match => {"log" => "%{WORD:app_name}\|%{NOTSPACE}\s%{NOTSPACE}\s%{DATA:eventTime}\;%{NUMBER:AlarmId}\;%{USERNAME:notificationType}\;%{DATA:eventType}\;%{DATA:probableCause}\;%{DATA:specificProblem}\;%{DATA:addnlText}\;%{GREEDYDATA:addnlInfo}\;%{WORD:severityString}"}
+                    remove_field => "log"
+                    remove_field => "tags"
+                    add_field => { "log_type" => "alarm"}
+              }
+             }
+            if "_grokparsefailure" in [tags] {
+                 grok {
+                     match => {"log" => "%{GREEDYDATA:log_message}"}
+                     remove_field => "log"
+                     add_field => { "log_type" => "debug"}
+                  }
+              }
+            if "Num of connected RU" in [log_message] {
+               grok {
+                 match => {"log_message" => "%{GREEDYDATA}%{NUMBER:num_value1}"}
+                 add_field => {
+                   "msg_type" => "CONNECTED_RU"
+                   "num_field1" => "numRU"
+                   "log_type" => "debug"}
+                 }
+             }
+           }
+         }
+             metrics {
+                 meter => [ "log_type" ]
+                 add_tag => "metric"
+               }
+
+       }
+       
+kind: ConfigMap
+metadata:
+  name: logstash-pipeline-debug-elasticsearch-test1 
+  namespace: default
+  labels:
+    app: "{{ template "logstash.fullname" . }}"
+    chart: "{{ .Chart.Name }}"
+    heritage: {{ .Release.Service | quote }}
+    release: {{ .Release.Name | quote }}

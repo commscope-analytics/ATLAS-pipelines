@@ -1,0 +1,50 @@
+# ILM needs to created and details need to be added beolw.
+
+apiVersion: v1
+data:
+  logstash_output.conf: |+
+     output {
+            
+        # #if [log_type] == "debug" {
+        #    #elasticsearch {
+        #        #cloud_id => "{{ .Values.CLOUD_ID }}"
+        #        #manage_template => false
+        #        #cloud_auth => "${USER_NAME}:${PASSWORD}"
+        #        #ilm_enabled => "true"
+        #        #ilm_rollover_alias => "oc5g-debug"
+        #        #ilm_pattern => "00001"
+        #        #ilm_policy => "oc5g-debug-ilm"
+        #      #}
+        # #stdout { codec => rubydebug { metadata => true }}
+        # #}
+        # if "metric" in  [tags] {
+        #   stdout {
+        #       codec => line { format => "count: %{[log_type][count]} rate: %{[log_type][rate_1m]" }
+        #   }
+        #  }
+        
+          
+        elasticsearch {
+            hosts => ["https://atlas-onecell-5g.es.ap-south-1.aws.elastic-cloud.com:9243"]
+            user => "admin"
+            password => "iMcG6Hh3NJqC46p"
+            template_name => "chronos-4g-debug"
+            index => "chronos-4g-debug-%{+yyyy.MM}"
+            codec => json
+          }
+          stdout {
+            codec => rubydebug
+        }
+
+     }
+
+kind: ConfigMap
+metadata:
+  name: logstash-pipeline-output-elasticsearch-test
+  namespace: default
+  labels:
+    app: "{{ template "logstash.fullname" . }}"
+    chart: "{{ .Chart.Name }}"
+    heritage: {{ .Release.Service | quote }}
+    release: {{ .Release.Name | quote }}
+
