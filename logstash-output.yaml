@@ -1,8 +1,5 @@
 # ILM needs to created and details need to be added beolw.
 
-apiVersion: v1
-data:
-  logstash_output.conf: |+
      output {
             
         # #if [log_type] == "debug" {
@@ -37,14 +34,3 @@ data:
         }
 
      }
-
-kind: ConfigMap
-metadata:
-  name: logstash-pipeline-output-elasticsearch-test
-  namespace: default
-  labels:
-    app: "{{ template "logstash.fullname" . }}"
-    chart: "{{ .Chart.Name }}"
-    heritage: {{ .Release.Service | quote }}
-    release: {{ .Release.Name | quote }}
-
