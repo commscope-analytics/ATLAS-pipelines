@@ -1,16 +1,13 @@
 {{- range $key, $value := .Values.setup_details }}
---- 
-apiVersion: v1
-data:
-  logstash_input.conf: |+
+
     input {
-     #kafka {
-       #bootstrap_servers => "{{ $value.KAFKA_SERVERS }}"
-       #topics => "{{ $value.TOPIC_NAME }}"
-       #group_id => "{{ $key }}-eks"
-       #add_field => {
-       # "setup_name" => "{{ $key }}"
-       #}
+     kafka {
+       bootstrap_servers => "{{ $value.KAFKA_SERVERS }}"
+       topics => "{{ $value.TOPIC_NAME }}"
+       group_id => "{{ $key }}-eks"
+       add_field => {
+        "setup_name" => "{{ $key }}"
+       }
       
       #  file {
       #    path => "/usr/share/logstash/logstash_log_file"
@@ -20,13 +17,5 @@ data:
       #       "setup_name" => "svt-setup"        
       #     }
       #   }
-      beats {
-        type => beats
-        port => 5044
-      }
     }
-kind: ConfigMap
-metadata:
-  name: {{ $key }}-logstash-pipeline-input-elasticsearch-test
-  namespace: default
-{{ end }}
+
