@@ -1,6 +1,4 @@
-apiVersion: v1
-data:
-  logstash_debug_ruc_elastic.conf: |+
+
        filter {
          if [log_type] == "debug" {
            if [log_message] == "Num of connected RU" or [log_message] == "Number of RU currently connected" {
@@ -10,12 +8,3 @@ data:
          }
 
        }
-kind: ConfigMap
-metadata:
-  name: logstash-pipeline-rucc-debug-elasticsearch-test
-  namespace: default
-  labels:
-    app: "{{ template "logstash.fullname" . }}"
-    chart: "{{ .Chart.Name }}"
-    heritage: {{ .Release.Service | quote }}
-    release: {{ .Release.Name | quote }}
