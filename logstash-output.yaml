@@ -26,7 +26,7 @@
             user => "admin"
             password => "iMcG6Hh3NJqC46p"
             template_name => "chronos-4g-debug"
-            index => "chronos-4g-debug-%{+yyyy.MM}"
+            index => "test"
             codec => json
           }
           stdout {
